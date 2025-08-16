@@ -84,7 +84,6 @@ export function WalletConnectionStatus({
           />
           <div className={`${sizeClasses.icon} animate-pulse`}>🔗</div>
         </div>
-        <h3 className={`${sizeClasses.title} text-white mb-4`}>连接中...</h3>
         <p className={`${sizeClasses.description} text-ocean-200 mb-6`}>
           正在连接Web3钱包，请稍候
         </p>
@@ -158,11 +157,19 @@ export function WalletConnectionStatus({
 
 // 专门用于页面的简化版本
 export function WalletConnectionRequired({ children }: { children: React.ReactNode }) {
-  return (
-    <WalletConnectionStatus variant="page" size="medium">
-      {children}
-    </WalletConnectionStatus>
-  )
+  const { isConnected, isConnecting } = useDriftBottle()
+  
+  // 只在未连接或正在连接时显示状态，连接后立即显示内容
+  if (!isConnected || isConnecting) {
+    return (
+      <WalletConnectionStatus variant="page" size="medium">
+        {children}
+      </WalletConnectionStatus>
+    )
+  }
+  
+  // 连接后立即显示内容，不等待稳定性检查
+  return <>{children}</>
 }
 
 // 专门用于内联显示的版本

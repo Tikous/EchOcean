@@ -121,16 +121,8 @@ export default function RepliesPage() {
     }
   }
 
-  // Register for global refresh events
-  useEffect(() => {
-    if (!address || !isConnected) return
-    
-    const unregister = cacheManager.onRefresh(() => {
-      handleManualRefresh()
-    })
-    
-    return unregister
-  }, [address, isConnected])
+  // Removed global refresh listener to prevent double toast
+  // The refresh button will handle refresh directly without duplicating events
 
   const loadConversationDetails = async (replyData: any[]) => {
     if (!isConnected || !address || replyData.length === 0) {

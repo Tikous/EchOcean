@@ -39,13 +39,14 @@ export const RefreshButton = React.memo(function RefreshButton({
     setIsRefreshing(true)
     
     try {
-      // Call local refresh callback if provided
+      // Only call local refresh callback if provided, don't trigger global refresh
+      // to avoid duplicate execution
       if (onRefresh) {
         await onRefresh()
+      } else {
+        // Only trigger global refresh if no local callback is provided
+        await cacheManager.triggerRefresh(true)
       }
-      
-      // Trigger global refresh
-      await cacheManager.triggerRefresh(true)
       
     } catch (error) {
       console.error('刷新失败:', error)

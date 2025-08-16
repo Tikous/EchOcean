@@ -51,15 +51,15 @@ export default function MyBottlesPage() {
     args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: !!DRIFT_BOTTLE_CONTRACT_ADDRESS && !!address && isConnected,
-      // Optimized for faster navigation with immediate cache display
-      staleTime: 1000 * 60 * 5, // 5 minutes - longer cache to reduce refetches
-      gcTime: 1000 * 60 * 30, // 30 minutes - keep in cache longer for navigation
-      refetchOnMount: false, // Don't refetch on mount, use cache first
-      refetchOnWindowFocus: false, // Prevent focus refetches that cause flickering
-      placeholderData: (previousData) => previousData, // Keep previous data while refetching
-      // Better deduplication for rapid navigation
-      structuralSharing: true,
-      notifyOnChangeProps: ['data', 'error'], // Reduce notifications to prevent rerenders
+      // Optimized for immediate cache display and minimal refetching
+      staleTime: 1000 * 60 * 10, // 10 minutes - very long cache to reduce refetches
+      gcTime: 1000 * 60 * 60, // 60 minutes - keep in cache very long for navigation
+      refetchOnMount: false, // Never refetch on mount, always use cache first
+      refetchOnWindowFocus: false, // Never refetch on focus
+      refetchOnReconnect: false, // Don't refetch on reconnect
+      placeholderData: (previousData) => previousData, // Always keep previous data
+      structuralSharing: false, // Disable to prevent reference issues
+      notifyOnChangeProps: ['data'], // Only notify on data changes, ignore loading states
     },
   })
 
@@ -79,20 +79,84 @@ export default function MyBottlesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userBottleIds, address, isConnected])
 
+  // Function to refresh replies for existing bottles
+  const refreshRepliesForExistingBottles = async (bottleIds: number[]) => {
+    try {
+      console.log('刷新现有瓶子的回复数据...')
+      
+      for (const bottleId of bottleIds) {
+        try {
+          // Get fresh reply data from blockchain
+          const bottleReplies = await readBottleReplies(bottleId)
+          const processedReplies: Reply[] = Array.isArray(bottleReplies) 
+            ? bottleReplies.map((reply: any, index: number) => {
+                try {
+                  return {
+                    id: index,
+                    content: (reply.content || reply[1] || '').toString().replace(/^["""]+|["""]+$/g, ''),
+                    timestamp: (() => {
+                      const rawTs = reply.timestamp || reply[2] || Date.now();
+                      const ts = typeof rawTs === 'bigint' ? Number(rawTs) : Number(rawTs);
+                      return ts > 0 ? (ts < 1e12 ? ts * 1000 : ts) : Date.now();
+                    })(),
+                    replier: (reply.replier || reply[0] || 'Anonymous').toString()
+                  }
+                } catch (error) {
+                  console.warn(`处理回复 ${index} 时出错:`, error)
+                  return null
+                }
+              }).filter(reply => reply !== null)
+            : []
+          
+          // Update replies for this bottle
+          updateBottleReplies(bottleId, processedReplies)
+          
+          // Update bottle reply count
+          updateBottle(bottleId, { replyCount: processedReplies.length })
+          
+          // Update reply permissions
+          if (processedReplies.length > 0) {
+            const lastReply = processedReplies[processedReplies.length - 1]
+            const canReply = lastReply.replier !== address
+            updateCanReplyTo(bottleId, canReply)
+          } else {
+            updateCanReplyTo(bottleId, true)
+          }
+          
+          console.log(`✅ 瓶子 ${bottleId} 回复数据已刷新，共 ${processedReplies.length} 条回复`)
+          
+        } catch (error) {
+          console.error(`刷新瓶子 ${bottleId} 回复失败:`, error)
+        }
+      }
+      
+      console.log('✅ 所有瓶子回复数据刷新完成')
+      
+    } catch (error) {
+      console.error('刷新回复数据失败:', error)
+    }
+  }
+
   const loadBottleDetails = async (bottleIds: number[]) => {
     if (!isConnected || !address || bottleIds.length === 0) {
       clearData()
       return
     }
 
-    // Check if we already have all the required bottles to avoid unnecessary reloading
+    // Always check for fresh reply data, even if bottles are cached
+    // This ensures we get new replies from other users
+    console.log('正在检查瓶子数据更新...')
+    
+    // Check if we need to load bottles or just refresh reply data
     const existingBottleIds = bottles.map(b => b.id).sort()
     const requiredBottleIds = bottleIds.sort()
     const hasAllBottles = existingBottleIds.length === requiredBottleIds.length && 
       existingBottleIds.every((id, index) => id === requiredBottleIds[index])
     
     if (hasAllBottles && bottles.length > 0) {
-      console.log('Bottles already loaded, skipping reload')
+      console.log('瓶子已缓存，检查回复更新...')
+      // Just refresh reply data for existing bottles
+      await refreshRepliesForExistingBottles(bottleIds)
       return
     }
 
@@ -316,20 +380,27 @@ export default function MyBottlesPage() {
     }
   }
 
-  // Register for global refresh events
+  // Setup periodic reply checks (removed global refresh listener to prevent double toast)
   useEffect(() => {
     if (!address || !isConnected) return
     
-    const unregister = cacheManager.onRefresh(() => {
-      handleManualRefresh()
-    })
+    // Periodic background refresh for replies (every 30 seconds)
+    const replyRefreshInterval = setInterval(() => {
+      if (userBottleIds && userBottleIds.length > 0) {
+        const bottleIds = userBottleIds.map(id => typeof id === 'bigint' ? Number(id) : Number(id))
+        console.log('🔄 后台检查回复更新...')
+        refreshRepliesForExistingBottles(bottleIds)
+      }
+    }, 30000) // 30 seconds
     
-    return unregister
-  }, [address, isConnected])
+    return () => {
+      clearInterval(replyRefreshInterval)
+    }
+  }, [address, isConnected, userBottleIds])
 
-  // Improved loading logic to prevent flickering
-  const isLoading = bottlesLoading && !isDataLoaded && bottles.length === 0 && !isRefreshing
-  const showSkeleton = isLoading || (isRefreshing && bottles.length === 0)
+  // Simplified loading logic to prevent flickering
+  const isLoading = !isDataLoaded && bottles.length === 0 && !isRefreshing
+  const showSkeleton = isLoading
 
   return (
     <>
