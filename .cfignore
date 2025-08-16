@@ -1,0 +1,49 @@
+# Cloudflare Pages ignore file
+# This prevents large files from being uploaded to Cloudflare
+
+# Next.js cache and build artifacts
+.next/cache/
+cache/
+*.tsbuildinfo
+
+# Node modules (installed during build)
+node_modules/
+
+# Hardhat artifacts  
+artifacts/
+cache/
+
+# Large development files
+coverage/
+.nyc_output/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Git files (keep minimal git info)
+.git/
+
+# Environment files (handled by Cloudflare environment variables)
+.env*
+
+# Documentation files (reduce upload size)
+*.md
+deploy-instructions.md
+DEPLOYMENT.md
+IMPROVEMENTS.md
+
+# Development scripts and configs (not needed for production)
+hardhat.config.js
+deployment.json
+
+# Keep build script for Cloudflare
+!scripts/build-cloudflare.sh

@@ -1,0 +1,19 @@
+# Cloudflare Pages redirect rules for Next.js static export
+# Handle client-side routing for SPA
+
+# Static assets - serve directly
+/_next/static/* /_next/static/:splat 200
+/assets/* /assets/:splat 200
+/favicon.ico /favicon.ico 200
+
+# API routes would go here if we had any
+# /api/* /api/:splat 404
+
+# Handle page routes with trailing slashes (required for static export)
+/send /send/ 301
+/receive /receive/ 301
+/my-bottles /my-bottles/ 301  
+/replies /replies/ 301
+
+# SPA fallback - redirect all non-file requests to homepage
+/* /index.html 200

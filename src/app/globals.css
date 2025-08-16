@@ -1,0 +1,761 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Critical CSS inline optimization */
+@layer base {
+  /* Font optimization */
+  html {
+    font-display: swap;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Performance optimizations */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Pure Blue Ocean theme with optimized background */
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+    135deg,
+    theme('colors.ocean.950') 0%,
+    theme('colors.ocean.900') 20%,
+    theme('colors.ocean.800') 40%,
+    theme('colors.ocean.700') 60%,
+    theme('colors.ocean.600') 80%,
+    theme('colors.ocean.500') 100%
+  );
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Optimized background layers with enhanced animation continuity */
+.dynamic-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -10;
+  contain: layout style paint;
+  transform: translateZ(0); /* Force GPU acceleration */
+  isolation: isolate; /* Create new stacking context */
+  backface-visibility: hidden; /* Prevent flicker */
+}
+
+.dynamic-background-layer-1 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(ellipse at 25% 75%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 25%, rgba(96, 165, 250, 0.25) 0%, transparent 50%);
+  animation: background-fade-optimized 20s ease-in-out infinite;
+  animation-fill-mode: both; /* Maintain state between cycles */
+  animation-play-state: running; /* Explicit play state */
+  will-change: opacity;
+  transform: translateZ(0); /* GPU layer */
+  backface-visibility: hidden;
+}
+
+.dynamic-background-layer-2 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(ellipse at 60% 20%, rgba(147, 197, 253, 0.2) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, rgba(37, 99, 235, 0.2) 0%, transparent 60%);
+  animation: background-fade-optimized 20s ease-in-out infinite reverse;
+  animation-fill-mode: both;
+  animation-play-state: running;
+  will-change: opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.dynamic-background-layer-3 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+  animation: background-pulse 25s ease-in-out infinite;
+  animation-fill-mode: both;
+  animation-play-state: running;
+  will-change: opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@keyframes background-fade-optimized {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes background-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+/* Optimized floating particles */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(147, 197, 253, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+  background-size: 200px 200px, 300px 300px, 150px 150px;
+  animation: float-particles-optimized 30s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+  will-change: transform;
+}
+
+
+
+/* Floating bubbles with enhanced continuity */
+.ocean-bubbles {
+  position: fixed;
+  bottom: -50px;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -1;
+  contain: layout style paint;
+  isolation: isolate;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.bubble {
+  position: absolute;
+  bottom: 0;
+  background: rgba(147, 197, 253, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 50%;
+  animation: bubble-rise 10s linear infinite;
+  animation-fill-mode: both; /* Maintain animation state */
+  animation-play-state: running; /* Explicit running state */
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.3);
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout style;
+}
+
+/* Enhanced bubble animations with stable timing */
+.bubble-1,
+.bubble:nth-child(1) {
+  left: 10%;
+  width: 20px;
+  height: 20px;
+  animation-delay: 0s;
+  animation-duration: 8s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.bubble-2,
+.bubble:nth-child(2) {
+  left: 30%;
+  width: 15px;
+  height: 15px;
+  animation-delay: 2s;
+  animation-duration: 12s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.bubble-3,
+.bubble:nth-child(3) {
+  left: 60%;
+  width: 25px;
+  height: 25px;
+  animation-delay: 4s;
+  animation-duration: 10s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.bubble-4,
+.bubble:nth-child(4) {
+  left: 80%;
+  width: 18px;
+  height: 18px;
+  animation-delay: 6s;
+  animation-duration: 9s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+@keyframes float-particles-optimized {
+  0%, 100% { 
+    transform: translate3d(0px, 0px, 0px); 
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translate3d(20px, -20px, 0px); 
+    opacity: 0.6;
+  }
+}
+
+
+@keyframes bubble-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0px, 100px, 0px) scale(0);
+  }
+  10% {
+    opacity: 1;
+    transform: translate3d(0px, 0px, 0px) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translate3d(30px, -90vh, 0px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(50px, -100vh, 0px) scale(0.5);
+  }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(51, 231, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(51, 231, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Base glass styles with transition for smooth hover effects */
+.glass {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Only apply glass hover effects to elements that don't have explicit hover:scale classes */
+.glass:hover:not(.hover-scale-override) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(51, 231, 255, 0.4);
+  transform: translate3d(0, -2px, 0) scale3d(1.02, 1.02, 1);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(51, 231, 255, 0.3),
+    0 0 15px rgba(0, 188, 212, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* For elements with custom scaling, only apply background and shadow effects */
+.glass.hover-scale-override {
+  will-change: transform;
+  transform: translateZ(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass.hover-scale-override:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(51, 231, 255, 0.4);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(51, 231, 255, 0.3),
+    0 0 15px rgba(0, 188, 212, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced button hover effects - GPU accelerated with transform only */
+button {
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Prevent double scaling on buttons */
+button.ripple-effect:hover {
+  transform: scale3d(1.05, 1.05, 1);
+}
+
+/* Ensure disabled buttons don't scale */
+button:disabled:hover {
+  transform: scale3d(1, 1, 1) !important;
+}
+
+/* Enhanced link transitions - transform only */
+a {
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Navigation link transitions */
+nav a {
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth scale transitions for all interactive elements */
+.hover\:scale-105:hover {
+  transform: scale3d(1.05, 1.05, 1);
+}
+
+/* Base transition for elements that can scale */
+.transform {
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ripple effect for buttons */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple-effect:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Enhanced vibrant theme styles */
+.text-ocean-100 { color: rgba(204, 251, 255, 1); }
+.text-ocean-200 { color: rgba(153, 246, 255, 1); }
+.text-ocean-300 { color: rgba(51, 231, 255, 1); }
+.text-ocean-400 { color: rgba(0, 188, 212, 1); }
+
+/* Enhanced shadow utilities */
+.shadow-ocean-glow {
+  box-shadow: 0 0 20px rgba(51, 231, 255, 0.3), 0 0 40px rgba(0, 188, 212, 0.1);
+}
+
+.shadow-coral-glow {
+  box-shadow: 0 0 20px rgba(251, 146, 60, 0.3), 0 0 40px rgba(249, 115, 22, 0.1);
+}
+
+/* Vibrant accent borders */
+.border-ocean-vibrant {
+  border-color: rgba(51, 231, 255, 0.4);
+}
+
+.border-coral-vibrant {
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+/* Page transition optimization */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent layout shift during transitions */
+main {
+  contain: layout style paint;
+  will-change: contents;
+}
+
+/* Enhanced page transition animations - GPU accelerated */
+.page-transition {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  opacity: 1;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition.loading {
+  opacity: 0.7;
+  transform: translate3d(0, 4px, 0);
+}
+
+/* Page transition wrapper styles */
+.page-transition-wrapper {
+  position: relative;
+  min-height: 100vh;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.page-transition-wrapper.transitioning {
+  pointer-events: none;
+}
+
+/* Smooth navigation animations */
+.nav-transition {
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading states for better perceived performance */
+.loading-skeleton {
+  background: linear-gradient(90deg, 
+    rgba(59, 130, 246, 0.1) 25%, 
+    rgba(59, 130, 246, 0.2) 50%, 
+    rgba(59, 130, 246, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Optimize for smooth scrolling */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+/* Performance hints for animations - enhanced GPU acceleration */
+.animate-spin,
+.animate-pulse,
+.animate-bounce,
+.animate-float,
+.animate-wave,
+.animate-pulse-glow,
+.animate-bounce-soft,
+.animate-shimmer,
+.animate-bubble-float,
+.animate-ripple {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Ensure spin animation works properly */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* React Spinners CSS fixes - ensure animations work */
+.react-spinners-ClipLoader {
+  animation: clip-loader-keyframes 0.75s 0s infinite linear !important;
+  border: 3px solid transparent !important;
+  border-top: 3px solid currentColor !important;
+  border-radius: 50% !important;
+}
+
+@keyframes clip-loader-keyframes {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.react-spinners-PulseLoader {
+  display: inline-block !important;
+}
+
+.react-spinners-PulseLoader > div {
+  animation: pulse-loader-keyframes 1.2s infinite ease-in-out !important;
+  border-radius: 100% !important;
+  display: inline-block !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+@keyframes pulse-loader-keyframes {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.react-spinners-ScaleLoader > div {
+  animation: scale-loader-keyframes 1s infinite ease-in-out !important;
+  border-radius: 4px !important;
+}
+
+@keyframes scale-loader-keyframes {
+  0%, 40%, 100% {
+    transform: scaleY(0.4);
+  }
+  20% {
+    transform: scaleY(1);
+  }
+}
+
+.react-spinners-GridLoader {
+  display: inline-block !important;
+  position: relative !important;
+}
+
+.react-spinners-GridLoader > div {
+  animation: grid-loader-keyframes 1.2s infinite ease-in-out !important;
+  border-radius: 100% !important;
+  position: absolute !important;
+}
+
+@keyframes grid-loader-keyframes {
+  0%, 70%, 100% {
+    transform: scale3D(1, 1, 1);
+  }
+  35% {
+    transform: scale3D(0, 0, 1);
+  }
+}
+
+/* Optimized keyframes using transform3d */
+@keyframes float {
+  0%, 100% { transform: translate3d(0, 0px, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate3d(0, 0, 1, 0deg); }
+  50% { transform: rotate3d(0, 0, 1, 3deg); }
+}
+
+@keyframes bounce-soft {
+  0%, 100% { transform: translate3d(0, 0px, 0); }
+  50% { transform: translate3d(0, -5px, 0); }
+}
+
+@keyframes bubble-float {
+  0%, 100% { transform: translate3d(0, 0px, 0) scale3d(1, 1, 1); }
+  33% { transform: translate3d(0, -20px, 0) scale3d(1.1, 1.1, 1); }
+  66% { transform: translate3d(0, -10px, 0) scale3d(0.9, 0.9, 1); }
+}
+
+@keyframes ripple {
+  0% { transform: scale3d(0, 0, 1); opacity: 1; }
+  100% { transform: scale3d(4, 4, 1); opacity: 0; }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .dynamic-background-layer-1,
+  .dynamic-background-layer-2,
+  .dynamic-background-layer-3,
+  .bubble,
+  body::before {
+    animation: none;
+  }
+  
+  .page-transition {
+    transition: none;
+  }
+}
+
+/* Optimize for high refresh rate displays */
+@media (min-resolution: 120dpi) {
+  .dynamic-background {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+  }
+}
+
+/* ConnectKit Button Visibility Fix */
+[data-ck="connectkit"] button,
+[data-connectkit] button,
+button[data-testid="ck-connect-button"],
+.ck-connect-button,
+.connectkit-button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  min-height: 40px !important;
+  min-width: 120px !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 8px 16px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+/* Connect button when NOT connected */
+[data-ck="connectkit"] button:not([data-variant="connected"]),
+[data-connectkit] button:not([data-variant="connected"]) {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4) !important;
+}
+
+[data-ck="connectkit"] button:not([data-variant="connected"]):hover,
+[data-connectkit] button:not([data-variant="connected"]):hover {
+  background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.6) !important;
+}
+
+/* Connected button showing address */
+[data-ck="connectkit"] button[data-variant="connected"],
+[data-connectkit] button[data-variant="connected"],
+.ck-connect-button[data-connected="true"] {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+[data-ck="connectkit"] button:hover,
+[data-connectkit] button:hover,
+button[data-testid="ck-connect-button"]:hover,
+.ck-connect-button:hover,
+.connectkit-button:hover {
+  background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.6) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Ensure ConnectKit container is visible */
+[data-ck="connectkit"],
+[data-connectkit],
+.connectkit-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+}
+
+/* Force visibility for hidden ConnectKit elements */
+[data-ck] * {
+  visibility: inherit !important;
+}
+
+/* Force ConnectKit to show address instead of "Connected" text */
+[data-ck="connectkit"] button .ck-button-text,
+[data-connectkit] button .ck-button-text,
+[data-ck="connectkit"] button span:contains("Connected"),
+[data-connectkit] button span:contains("Connected"),
+[data-ck="connectkit"] button span:contains("已连接"),
+[data-connectkit] button span:contains("已连接") {
+  display: none !important;
+}
+
+/* Ensure address is visible */
+[data-ck="connectkit"] button [data-ck="address"],
+[data-connectkit] button [data-ck="address"],
+.ck-address,
+.ck-address-text,
+[data-testid="ck-address"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Custom ConnectKit button override to ensure proper address display */
+.ck-connect-button-custom,
+[data-ck-custom] button {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 8px 16px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  min-width: 120px !important;
+  transition: all 0.2s ease !important;
+}
+
+.ck-connect-button-custom:hover,
+[data-ck-custom] button:hover {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.6) !important;
+}
+
+/* Improve ConnectKit button layout */
+[data-ck="connectkit"] button,
+[data-connectkit] button {
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* Hide balance if shown */
+[data-ck="connectkit"] .ck-balance,
+[data-connectkit] .ck-balance,
+.ck-balance {
+  display: none !important;
+}

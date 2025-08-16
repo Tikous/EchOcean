@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npm init:*)",
+      "Bash(rm:*)",
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Edit",
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(npm run dev:*)",
+      "Bash(cp:*)",
+      "Bash(true)",
+      "Bash(npx hardhat:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:blog.csdn.net)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(node:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(chmod:*)",
+      "Bash(EXPORT_MODE=true npm run build:static)",
+      "Bash(EXPORT_MODE=true NODE_ENV=production npm run build:static)",
+      "Bash(timeout 15s npm run dev)",
+      "Bash(PORT=3001 npm run dev)",
+      "WebFetch(domain:docs.monad.xyz)"
+    ],
+    "deny": []
+  }
+}

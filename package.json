@@ -1,0 +1,59 @@
+{
+  "name": "drift-bottle",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbo",
+    "build": "next build",
+    "build:static": "EXPORT_MODE=true next build",
+    "build:analyze": "ANALYZE=true next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "bundle-analyzer": "npx webpack-bundle-analyzer .next/static/chunks/",
+    "clear-cache": "node scripts/clear-cache.js",
+    "dev-fresh": "npm run clear-cache && npm run dev"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^3.24.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@tanstack/react-query": "^5.84.2",
+    "autoprefixer": "^10.4.21",
+    "connectkit": "^1.9.0",
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
+    "framer-motion": "^12.23.12",
+    "isomorphic-dompurify": "^2.26.0",
+    "lucide-react": "^0.539.0",
+    "next": "15.1.6",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-hot-toast": "^2.5.2",
+    "react-spinners": "^0.17.0",
+    "viem": "^2.33.3",
+    "wagmi": "^2.16.3"
+  },
+  "resolutions": {
+    "pino-pretty": "false"
+  },
+  "overrides": {
+    "pino-pretty": "false"
+  },
+  "devDependencies": {
+    "@next/bundle-analyzer": "^15.4.6",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@nomicfoundation/hardhat-verify": "^2.1.1",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "15.1.6",
+    "hardhat": "^2.26.2",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5",
+    "webpack-bundle-analyzer": "^4.10.2"
+  }
+}
