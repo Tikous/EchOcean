@@ -38,7 +38,8 @@ export default function ReceivePage() {
   const { 
     isConnected, 
     isConnecting,
-  address, 
+    isConnectionStable,
+    address, 
     getRandomBottle, 
     replyToBottle, 
     skipBottle, 
@@ -51,8 +52,8 @@ export default function ReceivePage() {
   } = useDriftBottle()
 
   const findBottle = async (retryCount = 0) => {
-    if (!isConnected) {
-      toast.error('请先连接钱包')
+    if (!isConnected || !isConnectionStable) {
+      toast.error('请先连接钱包并等待连接稳定')
       return
     }
 

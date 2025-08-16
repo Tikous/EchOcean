@@ -47,22 +47,19 @@ export function useDriftBottle() {
     return isActuallyConnecting || hasIncompleteConnection
   }, [isConnecting, isReconnecting, isConnected, address, status])
   
-  // Simplified connection stability tracking
+  // Optimized connection stability tracking to reduce loading flashes
   useEffect(() => {
     let stabilityTimer: NodeJS.Timeout
     
     if (actuallyConnected && !connectionLoading) {
-      // Shorter delay to improve perceived performance
-      stabilityTimer = setTimeout(() => {
-        setConnectionStable(true)
-        // Use secure storage for connection state
-        try {
-          driftBottleStorage.setConnectionStable(true)
-          driftBottleStorage.setLastConnectionTime(Date.now())
-        } catch (error) {
-          // Ignore storage errors to prevent connection issues
-        }
-      }, 500) // Reduced from 1000ms
+      // Immediate stability for better UX - no artificial delay
+      setConnectionStable(true)
+      try {
+        driftBottleStorage.setConnectionStable(true)
+        driftBottleStorage.setLastConnectionTime(Date.now())
+      } catch (error) {
+        // Ignore storage errors to prevent connection issues
+      }
     } else {
       setConnectionStable(false)
       try {

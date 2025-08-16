@@ -19,23 +19,31 @@ export function usePersistentBottleState(userAddress: string | undefined) {
   
   const cacheManager = DataCacheManager.getInstance()
 
-  // Enhanced cache loading with staleness detection
+  // Enhanced cache loading with staleness detection and single render
   useEffect(() => {
-    if (!userAddress) return
+    if (!userAddress) {
+      setIsDataLoaded(true)
+      return
+    }
 
     const cached = loadBottleDataFromCache(userAddress)
     if (cached) {
-      setBottles(cached.bottles)
-      setReplies(cached.replies)
-      setCanReplyTo(cached.canReplyTo)
-      
-      // Check if data is stale
+      // Use single state update to prevent multiple renders
       const cacheStatus = cacheManager.getCacheStatus(userAddress)
       setIsStale(cacheStatus.isStale)
       
+      // Batch state updates to prevent flickering
+      Promise.resolve().then(() => {
+        setBottles(cached.bottles)
+        setReplies(cached.replies)
+        setCanReplyTo(cached.canReplyTo)
+        setIsDataLoaded(true)
+      })
+      
       console.log('📦 加载缓存数据:', cached.bottles.length, '个涟漪', cacheStatus.isStale ? '(已过期)' : '(新鲜)')
+    } else {
+      setIsDataLoaded(true)
     }
-    setIsDataLoaded(true)
   }, [userAddress, cacheManager])
 
   // Enhanced save to cache with intelligent updates

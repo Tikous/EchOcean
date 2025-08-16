@@ -52,13 +52,14 @@ export default function MyBottlesPage() {
     query: {
       enabled: !!DRIFT_BOTTLE_CONTRACT_ADDRESS && !!address && isConnected,
       // Optimized for faster navigation with immediate cache display
-      staleTime: 1000 * 60 * 2, // 2 minutes - show cached data, background refetch
-      gcTime: 1000 * 60 * 20, // 20 minutes - keep in cache for navigation
-      refetchOnMount: 'always', // Always get fresh data when mounting
-      refetchOnWindowFocus: true, // Refetch when user comes back to page
+      staleTime: 1000 * 60 * 5, // 5 minutes - longer cache to reduce refetches
+      gcTime: 1000 * 60 * 30, // 30 minutes - keep in cache longer for navigation
+      refetchOnMount: false, // Don't refetch on mount, use cache first
+      refetchOnWindowFocus: false, // Prevent focus refetches that cause flickering
       placeholderData: (previousData) => previousData, // Keep previous data while refetching
       // Better deduplication for rapid navigation
       structuralSharing: true,
+      notifyOnChangeProps: ['data', 'error'], // Reduce notifications to prevent rerenders
     },
   })
 
@@ -326,8 +327,9 @@ export default function MyBottlesPage() {
     return unregister
   }, [address, isConnected])
 
-  const isLoading = (bottlesLoading || contractLoading) && !isDataLoaded && !isRefreshing
-  const showSkeleton = isLoading || isRefreshing
+  // Improved loading logic to prevent flickering
+  const isLoading = bottlesLoading && !isDataLoaded && bottles.length === 0 && !isRefreshing
+  const showSkeleton = isLoading || (isRefreshing && bottles.length === 0)
 
   return (
     <>

@@ -53,7 +53,7 @@ export const config = createConfig(
     
     // Connection behavior configuration
     syncConnectedChain: false, // 减少自动同步，防止导航时重连
-    multiInjectedProviderDiscovery: false, // 减少provider发现的开销
+    multiInjectedProviderDiscovery: true, // 启用自动发现注入的钱包
   }),
 )
 

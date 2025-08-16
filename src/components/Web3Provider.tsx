@@ -262,16 +262,15 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
               enforceSupportedChains: false,
               embedGoogleFonts: false,
               // Enhanced wallet connection persistence
-              initialChainId: 11155111, // Sepolia testnet
+              initialChainId: 10143, // Monad Testnet as primary
               // Additional stability options
               avoidLayoutShift: true,
               // Wallet connection persistence settings
               bufferPolyfill: false,
               // Force address display instead of "Connected" text
               truncateLongENSAddress: true,
-              // Note: autoConnect is not a valid ConnectKit option, removed for type safety
-              // Reduce wallet discovery overhead
-              walletConnectCTA: 'both',
+              // Prioritize browser extensions over QR code
+              walletConnectCTA: 'link',
               // Note: retryConnectorOnFailure is not a valid ConnectKit option, removed for type safety
             }}
             customTheme={{
