@@ -17,7 +17,17 @@ export function WalletConnectionStatus({
   size = 'medium',
   variant = 'page'
 }: WalletConnectionStatusProps) {
-  const { isConnected, isConnecting, isConnectionStable, rawConnectionState } = useDriftBottle()
+  const { 
+    isConnected, 
+    isConnecting, 
+    isConnectionStable, 
+    isConnectionTimeout,
+    connectionRetryCount,
+    canRetry,
+    rawConnectionState,
+    retryConnection,
+    clearConnectionData
+  } = useDriftBottle()
 
   // 如果已连接且稳定，直接渲染子内容
   if (isConnected && isConnectionStable) {
@@ -71,6 +81,47 @@ export function WalletConnectionStatus({
   const sizeClasses = getSizeClasses()
   const containerClasses = getContainerClasses()
 
+  // 连接超时状态
+  if (isConnectionTimeout) {
+    return (
+      <div className={`${containerClasses} ${sizeClasses.container}`}>
+        <div className={`${sizeClasses.icon} mb-4 text-red-400`}>⏰</div>
+        <h3 className={`${sizeClasses.title} text-white mb-4`}>连接超时</h3>
+        <p className={`${sizeClasses.description} text-ocean-200 mb-6`}>
+          钱包连接超时（5秒），请检查钱包是否已安装并解锁
+        </p>
+        <div className="space-y-3">
+          {canRetry && (
+            <button
+              onClick={retryConnection}
+              className={`${sizeClasses.button} bg-coral-500 hover:bg-coral-600 text-white font-medium rounded-lg transition-colors duration-200`}
+            >
+              重试连接 ({3 - connectionRetryCount}/3)
+            </button>
+          )}
+          <button
+            onClick={clearConnectionData}
+            className={`${sizeClasses.button} bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200`}
+          >
+            清除缓存并重新连接
+          </button>
+          {!canRetry && (
+            <p className="text-red-300 text-sm mt-4">
+              已达到最大重试次数，请刷新页面或检查钱包设置
+            </p>
+          )}
+        </div>
+        {showDetailedStatus && (
+          <div className="text-ocean-300 text-sm space-y-1 mt-4">
+            <p>重试次数: {connectionRetryCount}/3</p>
+            <p>连接状态: {rawConnectionState.status}</p>
+            <p>连接超时: {rawConnectionState.connectionTimeout ? '是' : '否'}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+  
   // 连接中状态
   if (isConnecting) {
     return (
@@ -85,13 +136,14 @@ export function WalletConnectionStatus({
           <div className={`${sizeClasses.icon} animate-pulse`}>🔗</div>
         </div>
         <p className={`${sizeClasses.description} text-ocean-200 mb-6`}>
-          正在连接Web3钱包，请稍候
+          正在连接Web3钱包，请稍候（5秒后自动超时）
         </p>
         {showDetailedStatus && (
           <div className="text-ocean-300 text-sm space-y-1">
             <p>连接状态: {rawConnectionState.status}</p>
             <p>正在连接: {rawConnectionState.isConnecting ? '是' : '否'}</p>
             <p>正在重连: {rawConnectionState.isReconnecting ? '是' : '否'}</p>
+            <p>重试次数: {connectionRetryCount}/3</p>
           </div>
         )}
       </div>
@@ -183,7 +235,27 @@ export function InlineWalletStatus({ children }: { children: React.ReactNode }) 
 
 // 钱包连接状态指示器（小型）
 export function WalletStatusIndicator() {
-  const { isConnected, isConnecting, isConnectionStable } = useDriftBottle()
+  const { 
+    isConnected, 
+    isConnecting, 
+    isConnectionStable, 
+    isConnectionTimeout,
+    connectionRetryCount,
+    canRetry,
+    retryConnection,
+    clearConnectionData
+  } = useDriftBottle()
+
+  if (isConnectionTimeout) {
+    return (
+      <div className="flex items-center space-x-2 text-red-400">
+        <div className="w-3 h-3 bg-red-400 rounded-full animate-ping"></div>
+        <span className="text-sm cursor-pointer" onClick={canRetry ? retryConnection : clearConnectionData}>
+          超时 {canRetry ? `(${3 - connectionRetryCount}/3)` : '(刷新)'}
+        </span>
+      </div>
+    )
+  }
 
   if (isConnecting) {
     return (
@@ -193,7 +265,7 @@ export function WalletStatusIndicator() {
           size={12}
           loading={true}
         />
-        <span className="text-sm">连接中</span>
+        <span className="text-sm">连接中 (5s)</span>
       </div>
     )
   }

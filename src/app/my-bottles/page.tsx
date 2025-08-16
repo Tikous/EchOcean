@@ -51,9 +51,9 @@ export default function MyBottlesPage() {
     args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: !!DRIFT_BOTTLE_CONTRACT_ADDRESS && !!address && isConnected,
-      // Optimized for immediate cache display and minimal refetching
-      staleTime: 1000 * 60 * 10, // 10 minutes - very long cache to reduce refetches
-      gcTime: 1000 * 60 * 60, // 60 minutes - keep in cache very long for navigation
+      // Optimized for fresh reply data while maintaining good performance
+      staleTime: 1000 * 60 * 2, // 2 minutes - shorter cache to show new replies faster
+      gcTime: 1000 * 60 * 30, // 30 minutes - reasonable cache retention
       refetchOnMount: false, // Never refetch on mount, always use cache first
       refetchOnWindowFocus: false, // Never refetch on focus
       refetchOnReconnect: false, // Don't refetch on reconnect
@@ -80,29 +80,61 @@ export default function MyBottlesPage() {
   }, [userBottleIds, address, isConnected])
 
   // Function to refresh replies for existing bottles
-  const refreshRepliesForExistingBottles = async (bottleIds: number[]) => {
+  const refreshRepliesForExistingBottles = async (bottleIds: number[], bypassCache = false) => {
     try {
-      console.log('刷新现有瓶子的回复数据...')
+      console.log('刷新现有瓶子的回复数据...', bypassCache ? '(强制从区块链获取)' : '')
       
       for (const bottleId of bottleIds) {
         try {
-          // Get fresh reply data from blockchain
+          // Get fresh reply data from blockchain (bypass cache if requested)
           const bottleReplies = await readBottleReplies(bottleId)
           const processedReplies: Reply[] = Array.isArray(bottleReplies) 
             ? bottleReplies.map((reply: any, index: number) => {
                 try {
+                  // 增强的内容提取逻辑
+                  const content = (() => {
+                    if (reply?.content && typeof reply.content === 'string') return reply.content;
+                    if (Array.isArray(reply) && reply[1]) return String(reply[1]);
+                    if (reply?.message) return String(reply.message);
+                    console.warn(`回复 ${index} 内容提取失败:`, reply);
+                    return ''; // 返回空字符串而不是占位符
+                  })().toString().replace(/^["""']+|["""']+$/g, '').trim();
+                  
+                  // 增强的时间戳处理
+                  const timestamp = (() => {
+                    const rawTs = reply?.timestamp || reply?.[2] || reply?.createdAt || 0;
+                    const ts = typeof rawTs === 'bigint' ? Number(rawTs) : Number(rawTs);
+                    // 验证时间戳合理性
+                    if (ts <= 0) {
+                      console.warn(`回复 ${index} 时间戳无效:`, rawTs);
+                      return Date.now();
+                    }
+                    // 处理秒转毫秒
+                    return ts < 1e12 ? ts * 1000 : ts;
+                  })();
+                  
+                  // 增强的回复者信息提取
+                  const replier = (() => {
+                    if (reply?.replier && typeof reply.replier === 'string') return reply.replier;
+                    if (Array.isArray(reply) && reply[0]) return String(reply[0]);
+                    if (reply?.sender) return String(reply.sender);
+                    return 'Anonymous';
+                  })();
+                  
+                  // 验证内容不为空
+                  if (!content || content.length === 0) {
+                    console.warn(`跳过空回复 ${index}:`, reply);
+                    return null;
+                  }
+                  
                   return {
                     id: index,
-                    content: (reply.content || reply[1] || '').toString().replace(/^["""]+|["""]+$/g, ''),
-                    timestamp: (() => {
-                      const rawTs = reply.timestamp || reply[2] || Date.now();
-                      const ts = typeof rawTs === 'bigint' ? Number(rawTs) : Number(rawTs);
-                      return ts > 0 ? (ts < 1e12 ? ts * 1000 : ts) : Date.now();
-                    })(),
-                    replier: (reply.replier || reply[0] || 'Anonymous').toString()
+                    content,
+                    timestamp,
+                    replier
                   }
                 } catch (error) {
-                  console.warn(`处理回复 ${index} 时出错:`, error)
+                  console.error(`处理回复 ${index} 时出错:`, error, 'Reply data:', reply)
                   return null
                 }
               }).filter(reply => reply !== null)
@@ -180,26 +212,49 @@ export default function MyBottlesPage() {
           const processedReplies: Reply[] = Array.isArray(bottleReplies) 
             ? bottleReplies.map((reply: any, index: number) => {
                 try {
+                  // 使用统一的回复处理逻辑
+                  const content = (() => {
+                    if (reply?.content && typeof reply.content === 'string') return reply.content;
+                    if (Array.isArray(reply) && reply[1]) return String(reply[1]);
+                    if (reply?.message) return String(reply.message);
+                    console.warn(`初始加载: 回复 ${index} 内容提取失败:`, reply);
+                    return '';
+                  })().toString().replace(/^["""']+|["""']+$/g, '').trim();
+                  
+                  const timestamp = (() => {
+                    const rawTs = reply?.timestamp || reply?.[2] || reply?.createdAt || 0;
+                    const ts = typeof rawTs === 'bigint' ? Number(rawTs) : Number(rawTs);
+                    if (ts <= 0) {
+                      console.warn(`初始加载: 回复 ${index} 时间戳无效:`, rawTs);
+                      return Date.now();
+                    }
+                    return ts < 1e12 ? ts * 1000 : ts;
+                  })();
+                  
+                  const replier = (() => {
+                    if (reply?.replier && typeof reply.replier === 'string') return reply.replier;
+                    if (Array.isArray(reply) && reply[0]) return String(reply[0]);
+                    if (reply?.sender) return String(reply.sender);
+                    return 'Anonymous';
+                  })();
+                  
+                  // 只返回有效内容的回复
+                  if (!content || content.length === 0) {
+                    console.warn(`初始加载: 跳过空回复 ${index}:`, reply);
+                    return null;
+                  }
+                  
                   return {
                     id: index,
-                    content: (reply.content || reply[1] || '').toString().replace(/^["""]+|["""]+$/g, ''),
-                    timestamp: (() => {
-                      const rawTs = reply.timestamp || reply[2] || Date.now();
-                      const ts = typeof rawTs === 'bigint' ? Number(rawTs) : Number(rawTs);
-                      return ts > 0 ? (ts < 1e12 ? ts * 1000 : ts) : Date.now();
-                    })(),
-                    replier: (reply.replier || reply[0] || 'Anonymous').toString()
+                    content,
+                    timestamp,
+                    replier
                   }
                 } catch (error) {
-                  console.warn(`处理回复 ${index} 时出错:`, error)
-                  return {
-                    id: index,
-                    content: '回复数据解析失败',
-                    timestamp: Date.now(),
-                    replier: 'Anonymous'
-                  }
+                  console.error(`初始加载: 处理回复 ${index} 时出错:`, error, 'Reply data:', reply)
+                  return null
                 }
-              }).filter(reply => reply.content && reply.content !== '回复数据解析失败')
+              }).filter(reply => reply !== null)
             : []
           
           // Store replies using persistent state
@@ -322,19 +377,41 @@ export default function MyBottlesPage() {
       setReplyText('')
       setReplyingTo(null)
       
-      // Refresh the bottle data to get updated replies
+      // Refresh the bottle data to get updated replies  
       const bottleReplies = await readBottleReplies(bottleId)
       const processedReplies: Reply[] = Array.isArray(bottleReplies) 
-        ? bottleReplies.map((reply: any, index: number) => ({
-            id: index,
-            content: reply.content || reply[1] || '',
-            timestamp: (() => {
-              const rawTs = reply.timestamp || reply[2] || Date.now();
-              const ts = typeof rawTs === 'bigint' ? Number(rawTs) : Number(rawTs);
-              return ts > 0 ? (ts < 1e12 ? ts * 1000 : ts) : Date.now();
-            })(),
-            replier: reply.replier || reply[0] || 'Anonymous'
-          }))
+        ? bottleReplies.map((reply: any, index: number) => {
+            try {
+              const content = (() => {
+                if (reply?.content && typeof reply.content === 'string') return reply.content;
+                if (Array.isArray(reply) && reply[1]) return String(reply[1]);
+                if (reply?.message) return String(reply.message);
+                return '';
+              })().toString().replace(/^["""']+|["""']+$/g, '').trim();
+              
+              const timestamp = (() => {
+                const rawTs = reply?.timestamp || reply?.[2] || reply?.createdAt || 0;
+                const ts = typeof rawTs === 'bigint' ? Number(rawTs) : Number(rawTs);
+                return ts > 0 ? (ts < 1e12 ? ts * 1000 : ts) : Date.now();
+              })();
+              
+              const replier = (() => {
+                if (reply?.replier && typeof reply.replier === 'string') return reply.replier;
+                if (Array.isArray(reply) && reply[0]) return String(reply[0]);
+                if (reply?.sender) return String(reply.sender);
+                return 'Anonymous';
+              })();
+              
+              if (!content || content.length === 0) {
+                return null;
+              }
+              
+              return { id: index, content, timestamp, replier }
+            } catch (error) {
+              console.error(`回复处理失败 ${index}:`, error)
+              return null
+            }
+          }).filter(reply => reply !== null)
         : []
       
       // Update replies and reply count using persistent state
@@ -368,7 +445,12 @@ export default function MyBottlesPage() {
       // Force refetch from blockchain
       const bottleIds = userBottleIds?.map(id => typeof id === 'bigint' ? Number(id) : Number(id)) || []
       if (bottleIds.length > 0) {
+        console.log('🔄 重新加载瓶子详情和回复数据...')
         await loadBottleDetails(bottleIds)
+        
+        // Explicitly refresh replies for all bottles to ensure new replies are shown
+        console.log('🔄 强制刷新所有瓶子的回复数据...')
+        await refreshRepliesForExistingBottles(bottleIds, true)
       }
       
       toast.success('数据已刷新')

@@ -326,16 +326,40 @@ export const driftBottleStorage = {
     return secureStorage.getItem(`bottleData_${bottleId}`)
   },
   
+  // Clear connection-related data only
+  clearConnectionData: () => {
+    if (typeof window === 'undefined') {
+      return // No-op on server side
+    }
+    
+    try {
+      secureStorage.removeItem('connectionStable')
+      secureStorage.removeItem('lastConnectionTime')
+      console.log('🧹 已清理钱包连接相关数据')
+    } catch (error) {
+      console.error('清理连接数据失败:', error)
+    }
+  },
+  
   // Clear all drift bottle data
   clearAllData: () => {
-    const keys = Object.keys(localStorage)
-    keys.forEach(key => {
-      if (key.startsWith('secure_connectionStable') ||
-          key.startsWith('secure_lastConnectionTime') ||
-          key.startsWith('secure_userPreferences') ||
-          key.startsWith('secure_bottleData_')) {
-        localStorage.removeItem(key)
-      }
-    })
+    if (typeof window === 'undefined') {
+      return // No-op on server side
+    }
+    
+    try {
+      const keys = Object.keys(localStorage)
+      keys.forEach(key => {
+        if (key.startsWith('secure_connectionStable') ||
+            key.startsWith('secure_lastConnectionTime') ||
+            key.startsWith('secure_userPreferences') ||
+            key.startsWith('secure_bottleData_')) {
+          localStorage.removeItem(key)
+        }
+      })
+      console.log('🧹 已清理所有漂流瓶应用数据')
+    } catch (error) {
+      console.error('清理全部数据失败:', error)
+    }
   }
 }

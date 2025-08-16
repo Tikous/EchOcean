@@ -27,6 +27,9 @@ export function useDriftBottle() {
   const { writeContract, data: hash, error, isPending } = useWriteContract()
   const [isLoading, setIsLoading] = useState(false)
   const [connectionStable, setConnectionStable] = useState(false)
+  const [connectionTimeout, setConnectionTimeout] = useState(false)
+  const [connectionRetryCount, setConnectionRetryCount] = useState(0)
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null)
 
   // Improved connection state with better validation
   const actuallyConnected = useMemo(() => {
@@ -38,20 +41,65 @@ export function useDriftBottle() {
     return hasValidAddress && isProperlyConnected && isNotConnecting
   }, [isConnected, address, status, isConnecting, isReconnecting])
   
-  // More accurate connection loading state
+  // More accurate connection loading state with timeout consideration
   const connectionLoading = useMemo(() => {
     // Consider connection as loading only during actual connection attempts
     const isActuallyConnecting = isConnecting || isReconnecting
     const hasIncompleteConnection = isConnected && (!address || address === '0x' || status !== 'connected')
     
-    return isActuallyConnecting || hasIncompleteConnection
-  }, [isConnecting, isReconnecting, isConnected, address, status])
+    // Don't show loading if connection has timed out
+    return (isActuallyConnecting || hasIncompleteConnection) && !connectionTimeout
+  }, [isConnecting, isReconnecting, isConnected, address, status, connectionTimeout])
+  
+  // Connection timeout management with 5-second timeout
+  useEffect(() => {
+    // Clear existing timeout when connection status changes
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      setTimeoutId(null)
+    }
+    
+    // Reset timeout state when actually connected
+    if (actuallyConnected) {
+      setConnectionTimeout(false)
+      setConnectionRetryCount(0)
+    }
+    
+    // Start timeout when connecting
+    if (isConnecting || isReconnecting) {
+      console.log('🔗 开始钱包连接，设置5秒超时')
+      setConnectionTimeout(false)
+      
+      const newTimeoutId = setTimeout(() => {
+        console.warn('⏰ 钱包连接超时（5秒）')
+        setConnectionTimeout(true)
+        setConnectionStable(false)
+        
+        // Clear connection cache and storage
+        try {
+          driftBottleStorage.setConnectionStable(false)
+          driftBottleStorage.clearConnectionData()
+        } catch (error) {
+          console.warn('清理连接缓存失败:', error)
+        }
+      }, 5000) // 5 second timeout
+      
+      setTimeoutId(newTimeoutId)
+    }
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [isConnecting, isReconnecting, actuallyConnected, timeoutId])
   
   // Optimized connection stability tracking to reduce loading flashes
   useEffect(() => {
-    if (actuallyConnected && !connectionLoading) {
+    if (actuallyConnected && !connectionLoading && !connectionTimeout) {
       // Immediate stability for better UX - no artificial delay
       setConnectionStable(true)
+      setConnectionTimeout(false)
       try {
         driftBottleStorage.setConnectionStable(true)
         driftBottleStorage.setLastConnectionTime(Date.now())
@@ -66,7 +114,7 @@ export function useDriftBottle() {
         // Ignore storage errors
       }
     }
-  }, [actuallyConnected, connectionLoading])
+  }, [actuallyConnected, connectionLoading, connectionTimeout])
 
   // Secure storage restoration
   useEffect(() => {
@@ -690,6 +738,52 @@ export function useDriftBottle() {
     }
   }, [actuallyConnected, connectionStable, bottleDataCache])
 
+  // Manual retry connection function
+  const retryConnection = useCallback(async () => {
+    if (connectionRetryCount >= 3) {
+      console.warn('已达到最大重试次数（3次），停止重试')
+      return false
+    }
+    
+    try {
+      console.log(`🔄 重试钱包连接 (${connectionRetryCount + 1}/3)`)
+      setConnectionTimeout(false)
+      setConnectionRetryCount(prev => prev + 1)
+      
+      // Clear existing storage and cache
+      try {
+        driftBottleStorage.clearConnectionData()
+      } catch (error) {
+        console.warn('清理连接数据失败:', error)
+      }
+      
+      // Note: Actual reconnection would need to be triggered by the wallet component
+      // This function mainly resets the timeout state to allow another connection attempt
+      return true
+    } catch (error) {
+      console.error('重试连接失败:', error)
+      return false
+    }
+  }, [connectionRetryCount])
+  
+  // Clear connection data function
+  const clearConnectionData = useCallback(() => {
+    try {
+      console.log('🧹 清理钱包连接数据和缓存')
+      driftBottleStorage.clearConnectionData()
+      setConnectionStable(false)
+      setConnectionTimeout(false)
+      setConnectionRetryCount(0)
+      
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+        setTimeoutId(null)
+      }
+    } catch (error) {
+      console.error('清理连接数据失败:', error)
+    }
+  }, [timeoutId])
+
   // Simplified memoization with reduced dependencies to prevent unnecessary re-renders
   return useMemo(() => ({
     // Core connection state
@@ -698,12 +792,18 @@ export function useDriftBottle() {
     isConnectionStable: connectionStable,
     address,
     
+    // Connection timeout state
+    isConnectionTimeout: connectionTimeout,
+    connectionRetryCount,
+    canRetry: connectionRetryCount < 3,
+    
     // Raw states for debugging
     rawConnectionState: {
       isConnected,
       isConnecting, 
       isReconnecting,
-      status
+      status,
+      connectionTimeout
     },
     
     // Transaction state
@@ -724,11 +824,17 @@ export function useDriftBottle() {
     estimateReplyGas,
     readBottleData,
     readBottleReplies,
+    
+    // Connection management functions
+    retryConnection,
+    clearConnectionData,
   }), [
     // Reduced dependencies - only include essential state changes
     actuallyConnected,
     connectionLoading,
     connectionStable,
+    connectionTimeout,
+    connectionRetryCount,
     address,
     isLoading,
     isPending,
@@ -744,6 +850,8 @@ export function useDriftBottle() {
     skipBottle,
     estimateReplyGas,
     readBottleData,
-    readBottleReplies
+    readBottleReplies,
+    retryConnection,
+    clearConnectionData
   ])
 }

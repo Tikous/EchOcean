@@ -43,7 +43,8 @@ export default function RepliesPage() {
     isLoading: repliesLoading,
     isRefetching: repliesRefetching,
     error: repliesError,
-    isPlaceholderData
+    isPlaceholderData,
+    refetch: refetchUserReplies
   } = useReadContract({
     address: DRIFT_BOTTLE_CONTRACT_ADDRESS,
     abi: DRIFT_BOTTLE_ABI,
@@ -109,8 +110,16 @@ export default function RepliesPage() {
       // Clear cache and reload fresh data
       clearData()
       
-      // Force refetch from blockchain - this will trigger useEffect
-      // The userReplies query will refetch automatically
+      // Force refetch from blockchain explicitly
+      console.log('🔄 强制重新获取用户回复数据...')
+      const result = await refetchUserReplies()
+      
+      if (result.data && Array.isArray(result.data)) {
+        console.log('✅ 获取到新的回复数据:', result.data.length, '条')
+        // Data will be processed by useEffect when userReplies updates
+      } else {
+        console.warn('⚠️ 未获取到有效的回复数据')
+      }
       
       toast.success('数据已刷新')
     } catch (error) {
