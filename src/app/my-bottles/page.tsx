@@ -6,7 +6,7 @@ import { Navbar } from '@/components/Navbar'
 import { useDriftBottle } from '@/hooks/useDriftBottle'
 import { usePersistentBottleState } from '@/hooks/usePersistentState'
 import { useReadContract } from 'wagmi'
-import { DRIFT_BOTTLE_CONTRACT_ADDRESS, DRIFT_BOTTLE_ABI } from '@/lib/web3'
+import { DRIFT_BOTTLE_CONTRACT_ADDRESS, DRIFT_BOTTLE_ABI, config } from '@/lib/web3'
 import { BottleListSkeleton } from '@/components/LoadingIndicator'
 import { WalletConnectionRequired } from '@/components/WalletConnectionStatus'
 import { RefreshButton, CompactRefreshButton } from '@/components/RefreshButton'
@@ -431,32 +431,88 @@ export default function MyBottlesPage() {
     }
   }
 
-  // Manual refresh function
+  // Manual refresh function with data backup and recovery
   const handleManualRefresh = async () => {
     if (!address || !isConnected) return
     
     setIsRefreshing(true)
+    
+    // Backup current data before refresh
+    const backupBottles = [...bottles]
+    const backupReplies = { ...replies }
+    const backupCanReplyTo = { ...canReplyTo }
+    
     try {
       console.log('🔄 手动刷新我的涟漪数据')
       
-      // Clear cache and reload fresh data
-      clearData()
+      // Get fresh bottle IDs from blockchain
+      let freshUserBottleIds: any[] = []
+      try {
+        // Force refetch user bottles from blockchain to get latest IDs
+        const { readContract } = await import('wagmi/actions')
+        const result = await readContract(config, {
+          address: DRIFT_BOTTLE_CONTRACT_ADDRESS,
+          abi: DRIFT_BOTTLE_ABI,
+          functionName: 'getUserBottles',
+          args: [address as `0x${string}`],
+        })
+        freshUserBottleIds = result ? [...result] : []
+        console.log('✅ 获取到最新瓶子ID列表:', freshUserBottleIds.length, '个')
+      } catch (error) {
+        console.warn('获取瓶子ID失败，使用缓存数据:', error)
+        freshUserBottleIds = userBottleIds ? [...userBottleIds] : []
+      }
       
-      // Force refetch from blockchain
-      const bottleIds = userBottleIds?.map(id => typeof id === 'bigint' ? Number(id) : Number(id)) || []
+      const bottleIds = freshUserBottleIds.map(id => typeof id === 'bigint' ? Number(id) : Number(id))
+      
       if (bottleIds.length > 0) {
+        // Clear current data only after we confirm we can get new data
         console.log('🔄 重新加载瓶子详情和回复数据...')
+        clearData()
+        
+        // Load fresh data
         await loadBottleDetails(bottleIds)
         
         // Explicitly refresh replies for all bottles to ensure new replies are shown
         console.log('🔄 强制刷新所有瓶子的回复数据...')
         await refreshRepliesForExistingBottles(bottleIds, true)
+        
+        // Verify we have data after refresh
+        if (bottles.length === 0 && backupBottles.length > 0) {
+          console.warn('⚠️ 刷新后没有数据，可能是网络问题，恢复备份数据')
+          setBottles(backupBottles)
+          setReplies(backupReplies)
+          setCanReplyTo(backupCanReplyTo)
+          toast.error('刷新可能未完全成功，显示之前的数据')
+        } else {
+          toast.success('数据已刷新')
+        }
+      } else if (backupBottles.length > 0) {
+        console.warn('⚠️ 未获取到瓶子ID，恢复备份数据')
+        // If we can't get bottle IDs but had data before, restore backup
+        setBottles(backupBottles)
+        setReplies(backupReplies)
+        setCanReplyTo(backupCanReplyTo)
+        toast.error('无法获取最新数据，显示之前的数据')
+      } else {
+        // No backup data and no fresh data - truly empty state
+        clearData()
+        toast.success('暂无涟漪数据')
       }
       
-      toast.success('数据已刷新')
     } catch (error) {
       console.error('手动刷新失败:', error)
-      toast.error('刷新失败，请重试')
+      
+      // Restore backup data on error
+      if (backupBottles.length > 0) {
+        console.log('🔄 刷新失败，恢复备份数据')
+        setBottles(backupBottles)
+        setReplies(backupReplies)
+        setCanReplyTo(backupCanReplyTo)
+        toast.error('刷新失败，显示之前的数据')
+      } else {
+        toast.error('刷新失败，请检查网络连接')
+      }
     } finally {
       setIsRefreshing(false)
     }
@@ -514,6 +570,7 @@ export default function MyBottlesPage() {
                 {isRefreshing && (
                   <div className="text-center">
                     <p className="text-ocean-300 text-sm">🔄 正在刷新数据...</p>
+                    <p className="text-ocean-400 text-xs mt-2">保持现有数据显示，正在后台获取最新内容</p>
                   </div>
                 )}
               </div>
@@ -532,6 +589,15 @@ export default function MyBottlesPage() {
               </div>
             ) : (
               <div className="space-y-6">
+                {/* Refresh indicator when data exists */}
+                {isRefreshing && (
+                  <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg p-3 text-center animate-pulse">
+                    <p className="text-blue-300 text-sm">
+                      🔄 正在刷新数据...{bottles.length > 0 ? '现有数据保持显示' : ''}
+                    </p>
+                  </div>
+                )}
+                
                 {bottles.map((bottle) => (
                   <div key={bottle.id} className="glass rounded-xl p-6">
                     <div className="flex items-start justify-between mb-4">

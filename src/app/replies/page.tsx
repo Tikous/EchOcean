@@ -99,32 +99,102 @@ export default function RepliesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userReplies, isDataLoaded])
 
-  // Manual refresh function
+  // Manual refresh function with data backup and recovery
   const handleManualRefresh = async () => {
     if (!address || !isConnected) return
     
     setIsRefreshing(true)
+    
+    // Backup current data before refresh
+    const backupConversations = [...conversations]
+    const backupFullConversationData = { ...fullConversationData }
+    
     try {
       console.log('🔄 手动刷新共鸣足迹数据')
       
-      // Clear cache and reload fresh data
-      clearData()
-      
-      // Force refetch from blockchain explicitly
-      console.log('🔄 强制重新获取用户回复数据...')
-      const result = await refetchUserReplies()
-      
-      if (result.data && Array.isArray(result.data)) {
-        console.log('✅ 获取到新的回复数据:', result.data.length, '条')
-        // Data will be processed by useEffect when userReplies updates
-      } else {
-        console.warn('⚠️ 未获取到有效的回复数据')
+      // Get fresh user replies from blockchain
+      let freshUserReplies: any[] = []
+      try {
+        console.log('🔄 强制重新获取用户回复数据...')
+        const result = await refetchUserReplies()
+        
+        if (result.data && Array.isArray(result.data)) {
+          freshUserReplies = result.data
+          console.log('✅ 获取到新的回复数据:', freshUserReplies.length, '条')
+        } else {
+          console.warn('⚠️ 未获取到有效的回复数据')
+          throw new Error('无法获取用户回复数据')
+        }
+      } catch (error) {
+        console.warn('获取回复数据失败，尝试恢复备份:', error)
+        if (backupConversations.length > 0) {
+          // Restore backup data
+          setConversations(backupConversations)
+          setFullConversationData(backupFullConversationData)
+          toast.error('无法获取最新数据，显示之前的数据')
+          return
+        } else {
+          throw error
+        }
       }
       
-      toast.success('数据已刷新')
+      if (freshUserReplies.length > 0) {
+        // Clear current data only after we confirm we can get new data
+        console.log('🔄 清理旧数据并加载新的对话详情...')
+        clearData()
+        
+        // Load fresh conversation details
+        await loadConversationDetails(freshUserReplies)
+        
+        // Wait for progressive loading to complete and verify data
+        let retryCount = 0
+        const maxRetries = 10
+        const checkDataLoaded = () => {
+          if (conversations.length > 0) {
+            toast.success('数据已刷新')
+            return
+          }
+          
+          if (retryCount < maxRetries) {
+            retryCount++
+            setTimeout(checkDataLoaded, 200) // Check every 200ms
+          } else if (backupConversations.length > 0) {
+            console.warn('⚠️ 刷新后没有数据，可能是网络问题，恢复备份数据')
+            setConversations(backupConversations)
+            setFullConversationData(backupFullConversationData)
+            toast.error('刷新可能未完全成功，显示之前的数据')
+          } else {
+            toast.success('暂无共鸣足迹数据')
+          }
+        }
+        
+        // Start checking after a brief delay
+        setTimeout(checkDataLoaded, 500)
+        
+      } else if (backupConversations.length > 0) {
+        console.warn('⚠️ 未获取到回复数据，恢复备份数据')
+        // If we can't get reply data but had data before, restore backup
+        setConversations(backupConversations)
+        setFullConversationData(backupFullConversationData)
+        toast.error('无法获取最新数据，显示之前的数据')
+      } else {
+        // No backup data and no fresh data - truly empty state
+        clearData()
+        toast.success('暂无共鸣足迹数据')
+      }
+      
     } catch (error) {
       console.error('手动刷新失败:', error)
-      toast.error('刷新失败，请重试')
+      
+      // Restore backup data on error
+      if (backupConversations.length > 0) {
+        console.log('🔄 刷新失败，恢复备份数据')
+        setConversations(backupConversations)
+        setFullConversationData(backupFullConversationData)
+        toast.error('刷新失败，显示之前的数据')
+      } else {
+        toast.error('刷新失败，请检查网络连接')
+      }
     } finally {
       setIsRefreshing(false)
     }
@@ -387,6 +457,9 @@ export default function RepliesPage() {
               <p className="text-xl text-ocean-200">
                 {isRefreshing ? '🔄 正在刷新数据...' : '正在加载你的回复记录...'}
               </p>
+              {isRefreshing && (
+                <p className="text-ocean-400 text-sm mt-2">正在后台获取最新内容，保持现有数据显示</p>
+              )}
             </div>
             
             {/* Loading skeleton */}
@@ -456,6 +529,15 @@ export default function RepliesPage() {
             </div>
           ) : (
             <div className="space-y-6">
+              {/* Refresh indicator when data exists */}
+              {isRefreshing && (
+                <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg p-3 text-center animate-pulse">
+                  <p className="text-blue-300 text-sm">
+                    🔄 正在刷新数据...{conversations.length > 0 ? '现有数据保持显示' : ''}
+                  </p>
+                </div>
+              )}
+              
               {conversations.map((conversation) => (
                 <div key={conversation.bottleId} className="glass rounded-xl p-6">
                   <div className="flex items-start justify-between mb-4">
