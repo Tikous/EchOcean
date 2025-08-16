@@ -49,8 +49,6 @@ export function useDriftBottle() {
   
   // Optimized connection stability tracking to reduce loading flashes
   useEffect(() => {
-    let stabilityTimer: NodeJS.Timeout
-    
     if (actuallyConnected && !connectionLoading) {
       // Immediate stability for better UX - no artificial delay
       setConnectionStable(true)
@@ -67,10 +65,6 @@ export function useDriftBottle() {
       } catch (error) {
         // Ignore storage errors
       }
-    }
-    
-    return () => {
-      if (stabilityTimer) clearTimeout(stabilityTimer)
     }
   }, [actuallyConnected, connectionLoading])
 
